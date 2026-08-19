@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Register — MediCare</title><link rel="stylesheet" href="css/styles.css"></head>
+<body>
+<nav class="navbar"><div class="nav-inner">
+<a class="brand" href="index.html">Medi<span>Care</span> 💊</a>
+<div class="nav-links" id="nav-links"><a href="index.html">Home</a><a href="medicines.html">Medicines</a>
+<a href="login.html" data-guest>Login</a><a href="register.html" class="active" data-guest>Register</a>
+<a href="cart.html" data-auth>Cart</a><a href="dashboard.html" data-auth>Dashboard</a><a href="#" id="logout-link" data-auth>Logout</a><span class="nav-user" id="nav-user" data-auth></span></div></div></nav>
+<div class="container"><h1>Create Account</h1>
+<form class="form" id="register-form"><label>Name<input id="name" required></label><label>Email<input type="email" id="email" required></label><label>Password<input type="password" id="password" required minlength="6"></label><label>Phone<input id="phone"></label><label>Address<textarea id="address" rows="2"></textarea></label><button class="btn" type="submit">Register</button><p>Have an account? <a href="login.html">Login</a></p></form>
+</div>
+<footer class="footer">© 2026 MediCare Pharmacy</footer>
+<div id="toast"></div>
+<script src="js/api.js"></script><script src="js/app.js"></script><script src="js/auth.js"></script>
+</body></html>

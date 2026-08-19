@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Medicines — MediCare</title><link rel="stylesheet" href="css/styles.css"></head>
+<body>
+<nav class="navbar"><div class="nav-inner">
+<a class="brand" href="index.html">Medi<span>Care</span> 💊</a>
+<div class="nav-links" id="nav-links">
+<a href="index.html">Home</a><a href="medicines.html" class="active">Medicines</a>
+<a href="cart.html" data-auth>Cart</a><a href="orders.html" data-auth>Orders</a>
+<a href="prescriptions.html" data-auth>Prescriptions</a><a href="dashboard.html" data-auth>Dashboard</a>
+<a href="login.html" data-guest>Login</a><a href="register.html" data-guest>Register</a>
+<a href="#" id="logout-link" data-auth>Logout</a><span class="nav-user" id="nav-user" data-auth></span>
+</div></div></nav>
+<div class="container">
+<h1>Browse Medicines</h1>
+<div class="toolbar">
+<input id="q" placeholder="Search medicines…" style="flex:1;min-width:180px">
+<select id="category"><option value="">All Categories</option></select>
+<label><input type="checkbox" id="rx"> Rx only</label>
+<select id="sort"><option value="">Sort: default</option><option value="price,asc">Price ↑</option><option value="price,desc">Price ↓</option><option value="name,asc">Name A–Z</option></select>
+<button class="btn" id="search-btn">Search</button>
+</div>
+<div class="grid" id="grid"></div>
+<div class="pagination"><button class="btn secondary small" id="prev">‹ Prev</button><span id="page-info"></span><button class="btn secondary small" id="next">Next ›</button></div>
+</div>
+<footer class="footer">© 2026 MediCare Pharmacy</footer>
+<div id="toast"></div>
+<script src="js/api.js"></script><script src="js/app.js"></script><script src="js/medicines.js"></script>
+</body></html>

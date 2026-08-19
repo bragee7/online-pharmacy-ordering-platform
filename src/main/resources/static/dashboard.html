@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — MediCare</title><link rel="stylesheet" href="css/styles.css"></head>
+<body>
+<nav class="navbar"><div class="nav-inner">
+<a class="brand" href="index.html">Medi<span>Care</span> 💊</a>
+<div class="nav-links" id="nav-links">
+<a href="index.html">Home</a><a href="medicines.html">Medicines</a>
+<a href="cart.html" data-auth>Cart</a><a href="orders.html" data-auth>Orders</a>
+<a href="prescriptions.html" data-auth>Prescriptions</a><a href="dashboard.html" class="active" data-auth>Dashboard</a>
+<a href="login.html" data-guest>Login</a><a href="register.html" data-guest>Register</a>
+<a href="#" id="logout-link" data-auth>Logout</a><span class="nav-user" id="nav-user" data-auth></span>
+</div></div></nav>
+<div class="container">
+<h1 id="dash-title">Dashboard</h1><p class="muted" id="dash-role"></p>
+<div id="admin-view" style="display:none">
+<section class="section"><h2>Stats</h2><div class="stats" id="stats"></div></section>
+<section class="section"><h2>Recent Orders</h2><table><thead><tr><th>Number</th><th>Status</th><th>Total</th><th>Action</th></tr></thead><tbody id="admin-orders"></tbody></table></section>
+<section class="section"><h2>Low Stock</h2><div class="grid" id="admin-low"></div></section>
+<section class="section"><h2>Recent Audits</h2><table><thead><tr><th>Action</th><th>User</th><th>Time</th></tr></thead><tbody id="admin-audits"></tbody></table></section>
+</div>
+<div id="pharma-view" style="display:none">
+<section class="section"><h2>Pending Prescriptions</h2><div class="grid" id="pharma-rx"></div></section>
+<section class="section"><h2>Low Stock</h2><div class="grid" id="pharma-low"></div></section>
+<section class="section"><h2>Orders — Update Status / Delivery</h2><table><thead><tr><th>Number</th><th>Status</th><th>Update</th></tr></thead><tbody id="pharma-orders"></tbody></table></section>
+</div>
+<div id="customer-view" style="display:none">
+<section class="section"><h2>My Summary</h2><div class="stats" id="cust-stats"></div></section>
+<section class="section"><h2>Recent Orders</h2><div class="grid" id="cust-orders"></div></section>
+</div>
+</div>
+<footer class="footer">© 2026 MediCare Pharmacy</footer>
+<div id="toast"></div>
+<script src="js/api.js"></script><script src="js/app.js"></script><script src="js/dashboard.js"></script>
+</body></html>

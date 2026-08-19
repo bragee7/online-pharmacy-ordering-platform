@@ -1,230 +1,287 @@
-# Online Pharmacy Ordering Platform
+# MediCare — Online Pharmacy Ordering Platform
 
-A production‑style **B.E. Computer Science & Engineering capstone project**: a complete
-online pharmacy ordering system with real pharmacy business logic, three user roles,
-prescription verification, inventory management, order processing, payment‑ready
-architecture and a modern React frontend.
-
-> Backend: **Java 17 · Spring Boot 3 · Spring Security + JWT · JPA/Hibernate · MySQL 8 · Flyway**
-> Frontend: **React 18 · Vite · Bootstrap 5 · Axios · React Router**
-
----
-
-## Project Overview
-
-The platform lets customers browse and order medicines online, upload prescriptions that
-licensed pharmacists review and approve/reject, and track orders through a validated state
-machine. A pharmacist manages prescriptions, order fulfilment and inventory warnings. An
-admin manages the entire catalogue, users and the business via a real data dashboard. The
-backend enforces every business rule — stock safety, prescription gates, pricing and order
-state transitions are **never** trusted to the frontend.
+Spring Boot 3.2.5 / Java 17 REST API for browsing medicines, cart, checkout (COD),
+prescriptions, inventory, payments and deliveries. Vanilla JS frontend is served
+statically; PostgreSQL is the primary DB (H2 for tests); Flyway manages migrations.
 
 ## Features
 
-- JWT authentication with BCrypt password hashing (3 roles: `CUSTOMER`, `PHARMACIST`, `ADMIN`)
-- Role‑based authorization + per‑resource ownership checks
-- Medicine catalogue with search, multi‑filter, and pagination (`/api/medicines/search`)
-- Prescription upload + pharmacist approval/rejection workflow (with rejection reason)
-- Shopping cart with server‑sided pricing, stock validation and prescription validation
-- Order processing with full state machine, cancellation rules, and status history
-- Inventory with reserve / release / deduct semantics and pessimistic locking (no oversell)
-- Mock payment gateway behind a `PaymentGateway` interface (Razorpay/Stripe can be plugged in)
-- Admin dashboard with real statistics from the database
-- Swagger/OpenAPI documentation
-- Extensibility seams for email/SMS, mapping, and AI assistant services
+- JWT auth (register/login/me), BCrypt passwords, role-based access
+- Medicine catalog: search by keyword/category/Rx, pagination + sorting, soft-delete/restore
+- Categories CRUD (admin)
+- Cart: add/update/remove/clear, stock-checked
+- Checkout: stock + Rx validation, order number generation, COD payment (PENDING),
+  delivery (PENDING, +5 days), inventory decrement, cart clear, audit log
+- Order state machine + cancel with restock/refund
+- Prescriptions: upload, approve/reject (pharmacist/admin)
+- Inventory: per-medicine stock, low-stock query (`quantity <= reorderLevel`)
+- Dashboard/admin stats, audit log
+- OpenAPI/Swagger UI, file uploads (prescription images, medicine images)
+- Tests: Mockito unit + `@DataJpaTest` + `JwtUtil` tests (H2)
+- Docker + docker-compose (postgres:16-alpine + app)
 
-## User Roles
+## Tech Stack
 
-| Role        | Capabilities |
-|-------------|--------------|
-| **CUSTOMER**   | Register, manage profile & addresses, browse/search medicines, cart, upload prescriptions, place/track/cancel orders |
-| **PHARMACIST** | Review pending prescriptions (approve/reject with reason), fulfil orders (status updates), monitor inventory & low stock |
-| **ADMIN**      | Manage users, medicines, categories, inventory; view all orders/prescriptions; dashboard statistics & reports |
-
-## Technology Stack
-
-**Backend** — Java 17, Spring Boot 3.x, Spring Web, Spring Data JPA (Hibernate), Spring Security,
-JJWT, Bean Validation, Lombok, Flyway, MySQL 8, Springdoc OpenAPI, JUnit 5 + Mockito.
-
-**Frontend** — React 18, Vite, Axios, Bootstrap 5, React Router, JSX.
+| Layer | Choice |
+|---|---|
+| Language | Java 17 |
+| Framework | Spring Boot 3.2.5 (web, data-jpa, security, validation) |
+| DB | PostgreSQL 16 (runtime), H2 (test) |
+| Migrations | Flyway (`classpath:db/migration`, `validate` in prod, disabled in tests) |
+| Auth | jjwt 0.12.6 (HS256), `JwtUtil` / `JwtProperties` |
+| Docs | springdoc-openapi 2.5.0 (`/api-docs`, `/swagger-ui.html`) |
+| Utils | Lombok, Spring Security Test |
+| Build | Maven (no `mvnw` wrapper in repo — install Maven, see below) |
+| Containers | eclipse-temurin:17-jre-alpine, postgres:16-alpine |
 
 ## Architecture
 
 ```
-Customer ─▶ React (Vite) ──axios/JWT──▶ Spring Boot REST ──JPA/Flyway──▶ MySQL 8
-                                          │
-                                          ├── PaymentGateway (mock)   ──▶ future Razorpay/Stripe
-                                          ├── NotificationService      ──▶ future Email/SMS
-                                          └── MedicineAssistantService ──▶ future AI
+                +------------------+
+                |  Browser / SPA   |
+                | (static /*.html) |
+                +--------+---------+
+                         |  REST /api/** (JWT Bearer)
+                         v
+                +--------+---------+
+                | SecurityConfig   |
+                | JwtAuthFilter    |
+                +--------+---------+
+                         |
+        +----------------+------------------+
+        |                |                   |
+   AuthController  Medicine/Cart/Order  Admin/Dashboard
+   AuthService     CartService          CategoryService
+                   OrderService         InventoryService
+                   MedicineService      PrescriptionService
+                   PaymentService       DeliveryService
+                   FileStorageService   AuditService
+        +----------------+------------------+
+                         | JPA
+                         v
+                +--------+---------+
+                | PostgreSQL       |
+                | (Flyway)         |
+                +------------------+
 ```
 
-See [`docs/diagrams/architecture.md`](docs/diagrams/architecture.md),
-[`docs/diagrams/er-diagram.md`](docs/diagrams/er-diagram.md) and
-[`docs/diagrams/class-diagram.md`](docs/diagrams/class-diagram.md).
+Package layout: `controller`, `service`, `repository`, `entity`, `dto`,
+`security` (`JwtUtil`, `JwtProperties`, `SecurityConfig`, `JwtAuthFilter`),
+`enums` (`Role`, `OrderStatus`, `PaymentStatus`, `DeliveryStatus`, `PrescriptionStatus`),
+`exception` (`BadRequestException`, `ResourceNotFoundException`, `InsufficientStockException`),
+`config` (`WebConfig`, `OpenApiConfig`), `util` (`OrderNumberGenerator`).
 
-## Database
-
-14 related tables managed by Flyway migrations (`backend/src/main/resources/db/migration`):
-`roles`, `users`, `addresses`, `categories`, `medicines`, `inventory`, `prescriptions`,
-`prescription_items`, `carts`, `cart_items`, `orders`, `order_items`, `payments`,
-`order_status_history`. Schema is created entirely via migrations on first boot.
+> Note: only `AuthController` is currently implemented in `controller/`. The API
+> table below documents the intended/currently-secured contract per
+> `SecurityConfig` + services. Add controllers to match before relying on them.
 
 ## Prerequisites
 
-- **Java 17+** (Java 21 works; bytecode targets 17)
-- **Node.js 18+** and npm
-- **MySQL 8** running locally (the app uses the `online_pharmacy` database)
-- No system Maven required — a committed **Maven Wrapper** (`mvnw.cmd`) downloads Maven itself.
+- Java 17 (`java -v`)
+- Maven 3.9+ (`mvn -v`) — **required** (no `mvnw`/`mvnw.cmd` in this repo)
+- Docker + Docker Compose (for `docker compose up`)
+- PostgreSQL 16 if running locally without Docker
 
-## Installation
+## Quickstart
 
-### 1. Clone / open the repository
-
-```bash
-git clone <repo-url> online-pharmacy-ordering-platform
-cd online-pharmacy-ordering-platform
-```
-
-### 2. Configure environment variables
-
-Copy the example and fill in values:
+### Option A — Docker Compose (recommended)
 
 ```bash
-# backend/
-cp ../.env.example .env        # or set OS env vars
+# 1. Build jar
+mvn -DskipTests package
+
+# 2. Start postgres + app
+docker compose up --build
+
+# 3. Open
+# API:  http://localhost:8080
+# Swagger: http://localhost:8080/swagger-ui.html
+# Health:  http://localhost:8080/health
 ```
 
-Required values: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET` (≥ 32 chars).
+Compose wires `SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/pharmacy_db`,
+`JWT_SECRET`/`JWT_EXPIRATION` (overridable via `.env` — copy `.env.example`).
 
-### 3. Database setup
-
-Create the MySQL database and user (or let the app create the database if
-`createDatabaseIfNotExist=true`):
-
-```sql
-CREATE DATABASE online_pharmacy CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'pharmacy'@'localhost' IDENTIFIED BY 'your-password';
-GRANT ALL PRIVILEGES ON online_pharmacy.* TO 'pharmacy'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-On first boot, Flyway creates all tables and seed scripts load sample
-categories, medicines and inventory. Users are seeded by the backend using BCrypt.
-
-### 4. Backend setup
+### Option B — Local (Postgres)
 
 ```bash
-cd backend
-./mvnw spring-boot:run
-# or, on Windows:
-mvnw.cmd spring-boot:run
+createdb pharmacy_db
+# edit src/main/resources/application.properties or export:
+# SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD
+mvn spring-boot:run
 ```
 
-The API is served at `http://localhost:8081`. Swagger UI: `http://localhost:8081/swagger-ui.html`
-(or `/swagger-ui/index.html`).
-
-### 5. Frontend setup
+### Option C — Tests only (H2, no Postgres needed)
 
 ```bash
-cd frontend
-npm install
-npm run dev
+mvn test
 ```
 
-Open `http://localhost:5173`. The Vite dev server proxies `/api` to the backend.
-
-## Database Setup (without MySQL installed)
-
-If you have no MySQL server, see `scripts/` for a portable local instance:
-`scripts/db-start.cmd` / `scripts/db-stop.cmd` initialise and run a MySQL 8 data
-directory placed outside the repository. See `scripts/README.md`.
-
-## Running the Application
-
-| Component | Command | URL |
-|---|---|---|
-| Backend  | `cd backend && mvnw.cmd spring-boot:run` | http://localhost:8081 |
-| Swagger  | — | http://localhost:8081/swagger-ui/index.html |
-| Frontend | `cd frontend && npm install && npm run dev` | http://localhost:5173 |
-
-## API Documentation
-
-OpenAPI 3 is enabled via springdoc. Browse: <http://localhost:8081/swagger-ui/index.html>
-(or `/swagger-ui.html`). Interactive API is documented per module: auth, users, categories,
-medicines, inventory, cart, prescriptions, orders, payments, admin.
-
-## Test Instructions
-
-```bash
-cd backend
-mvnw.cmd test
-```
-
-Unit/integration tests cover authentication, duplicate email, invalid credentials,
-medicine CRUD/search/pagination, cart operations, insufficient stock, prescription
-approve/reject, order creation/cancellation, invalid status transitions, ownership and
-role restrictions. Test configuration uses the `online_pharmacy_test` schema.
-See [`docs/api`](docs/api) for endpoint walkthroughs.
+Uses `src/test/resources/application-test.properties`
+(`jdbc:h2:mem:testdb`, `ddl-auto=create-drop`, `flyway.enabled=false`).
 
 ## Demo Credentials
 
-These are created at startup when `APP_SEED_ENABLED=true` (dev/demo only):
+Seeded via migration/manual insert (if migrations present):
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@example.com` | `Admin@123` |
-| Pharmacist | `pharmacist@example.com` | `Pharmacist@123` |
-| Customer 1 | `customer@example.com` | `Customer@123` |
-| Customer 2 | `customer2@example.com` | `Customer@123` |
+| ADMIN | admin@medicare.com | password |
+| PHARMACIST | pharmacist@medicare.com | password |
+| CUSTOMER | customer@medicare.com | password |
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"customer@medicare.com","password":"password"}'
+```
+
+## API Endpoints
+
+Base: `/api`. Auth: `Authorization: Bearer <jwt>` unless `permitAll`.
+
+| Method | Path | Roles | Notes |
+|---|---|---|---|
+| POST | /api/auth/register | permitAll | `{name,email,password,phone?,address?,role?}` — only CUSTOMER allowed; creates User + Cart, returns `{token,tokenType,user}` |
+| POST | /api/auth/login | permitAll | `{email,password}`; 400 on bad creds/disabled |
+| GET | /api/auth/me | authenticated | current `UserDto` |
+| GET | /api/medicines?keyword=&categoryId=&rx=&page=&size=&sort= | permitAll | `MedicineService.search`; includes `stock` (available) |
+| GET | /api/medicines/{id} | permitAll | `getById` |
+| POST | /api/medicines | ADMIN (+PHARMACIST per policy) | `MedicineRequest{name,price,categoryId?,initialStock,reorderLevel,...}` |
+| PUT | /api/medicines/{id} | ADMIN | `update` |
+| PATCH | /api/medicines/{id}/delete | ADMIN | soft-delete (`active=false`) |
+| PATCH | /api/medicines/{id}/restore | ADMIN | `active=true` |
+| GET | /api/categories | permitAll | list |
+| POST | /api/categories | ADMIN | create |
+| GET | /api/cart | authenticated | `getCart(userId from JWT)` |
+| POST | /api/cart/items?medicineId=&qty= | authenticated | `addItem`, stock-checked |
+| PUT | /api/cart/items/{itemId}?qty= | authenticated | `updateItem` (0 = delete) |
+| DELETE | /api/cart/items/{itemId} | authenticated | `removeItem` |
+| POST | /api/orders/checkout | authenticated | `{shippingAddress,paymentMethod=COD,prescriptionIds?}` → Order + COD PENDING Payment + PENDING Delivery |
+| GET | /api/orders | authenticated | own orders (paged) |
+| GET | /api/orders/{id} | owner/STAFF | `getById` |
+| GET | /api/orders/number/{orderNumber} | owner/STAFF | `getByOrderNumber` |
+| PATCH | /api/orders/{id}/cancel | CUSTOMER,ADMIN | owner or staff; only PLACED/CONFIRMED; restocks |
+| PATCH | /api/orders/{id}/status?status= | ADMIN/PHARMACIST* | `updateStatus`; DELIVERED/CANCELLED immutable |
+| GET | /api/orders/all?status= | ADMIN/PHARMACIST | `listAll` |
+| POST | /api/prescriptions (multipart) | authenticated | upload Rx file |
+| GET | /api/prescriptions | authenticated | own; staff sees all/filtered |
+| PUT | /api/prescriptions/{id} | PHARMACIST,ADMIN | approve/reject |
+| GET | /api/inventory/{medicineId} | ADMIN/PHARMACIST | `getByMedicine` |
+| PUT | /api/inventory/{medicineId} | ADMIN/PHARMACIST | `update(quantity,reorderLevel)` |
+| GET | /api/inventory/low-stock | ADMIN/PHARMACIST | `lowStock()` |
+| GET | /api/admin/dashboard | ADMIN | `DashboardService` stats |
+| GET | /api-docs, /swagger-ui.html, /health, /uploads/** | permitAll | docs/health/static |
+
+\* `SecurityConfig` currently maps `PATCH /api/orders/**` to `CUSTOMER,ADMIN` and
+`PUT /api/prescriptions/**` to `PHARMACIST,ADMIN`. Adjust `@PreAuthorize` as needed.
+
+## RBAC Matrix
+
+| Capability | CUSTOMER | PHARMACIST | ADMIN |
+|---|---|---|---|
+| Register/login, browse medicines/categories | ✅ | ✅ | ✅ |
+| Cart + checkout + own orders + cancel own PLACED/CONFIRMED | ✅ | ❌* | ✅ (staff override) |
+| Upload prescription | ✅ | ✅ | ✅ |
+| Approve/reject prescription (`PUT /api/prescriptions/**`) | ❌ | ✅ | ✅ |
+| Create/update medicines, inventory, low-stock | ❌ | read-only† | ✅ |
+| All orders, update status, dashboard (`/api/admin/**`) | ❌ | partial‡ | ✅ |
+
+\* Pharmacists typically don't order; enforced by convention, not filter.
+† Give pharmacists write if desired via method security.
+‡ `SecurityConfig`: `GET /api/orders/**` = authenticated; add staff checks in service.
+
+## Order State Machine
+
+```
+PLACED → CONFIRMED → PACKED → SHIPPED → OUT_FOR_DELIVERY → DELIVERED
+  |          |
+  +--> CANCELLED <--+  (only from PLACED/CONFIRMED; restocks + refunds SUCCESS payment)
+```
+
+- `updateStatus` rejects transitions from `DELIVERED`/`CANCELLED`.
+- `DELIVERED` marks linked `Delivery` DELIVERED.
+- `CANCELLED` restocks `Inventory.quantity += OrderItem.quantity`.
+
+## Payment / Delivery Notes
+
+- Checkout `paymentMethod` defaults to `COD`. COD → `Payment.status=PENDING`,
+  non-COD → `SUCCESS` + `paidAt=now`. `transactionReference` generated.
+- Every order creates `Delivery{trackingNumber, carrier="MediCare Logistics",
+  status=PENDING, estimatedDeliveryDate=+5d}`.
+- Cancel refunds only `SUCCESS` → `REFUNDED`; COD PENDING stays PENDING.
+- Rx rule: `medicine.prescriptionRequired=true` requires ≥1 APPROVED prescription
+  for the user, else 400. Non-Rx medicines checkout without Rx.
+- Stock rule: `Inventory.getAvailable() = quantity - reservedQuantity` must be
+  `>= CartItem.quantity`, else `InsufficientStockException` (400).
+
+## Testing
+
+```bash
+mvn test
+```
+
+| Test | Type | Covers |
+|---|---|---|
+| `AuthServiceTest` | Mockito `@InjectMocks` | register ok, duplicate email 400, login bad-creds 400 |
+| `MedicineServiceTest` | Mockito | `create` ok, `search` page + stock mapping |
+| `OrderServiceTest` | Mockito (lenient) | `checkout` ok (total, decrement, cart clear), empty cart 400 |
+| `InventoryLowStockTest` | `@DataJpaTest` + H2 + `@ActiveProfiles("test")` | `findLowStock` (`quantity <= reorderLevel`) |
+| `JwtUtilTest` | plain unit (manual `JwtProperties`) | generate/extract/valid, wrong-user invalid |
 
 ## Project Structure
 
 ```
-online-pharmacy-ordering-platform/
-├── backend/            Spring Boot application (Java 17, Maven Wrapper)
-├── frontend/           React 18 + Vite application
-├── docs/
-│   ├── diagrams/       architecture, ER, class diagrams (Mermaid)
-│   ├── api/            API documentation & walkthroughs
-│   └── database/       schema notes
-├── scripts/            local MySQL helper scripts
-├── .env.example        environment template
-├── Problem_Statement.md
-└── README.md
+.
+├── Dockerfile
+├── docker-compose.yml
+├── .dockerignore
+├── .env.example
+├── LICENSE
+├── README.md
+├── pom.xml (Spring Boot 3.2.5, Java 17, jjwt 0.12.6, springdoc 2.5.0)
+├── uploads/
+├── src/main/java/com/medicare/pharmacy/
+│   ├── PharmacyApplication.java
+│   ├── controller/AuthController.java
+│   ├── service/{Auth,Medicine,Cart,Order,Inventory,Category,Prescription,Payment,Delivery,Dashboard,Audit,FileStorage}Service.java
+│   ├── repository/{User,Medicine,Category,Inventory,Cart,CartItem,Order,OrderItem,Payment,Delivery,Prescription,AuditLog}Repository.java
+│   ├── entity/{User,Medicine,Category,Inventory,Cart,CartItem,Order,OrderItem,Payment,Delivery,Prescription,AuditLog}.java
+│   ├── dto/{RegisterRequest,LoginRequest,AuthResponse,UserDto,MedicineRequest,MedicineDto,CategoryDto,CartDto,CartItemDto,CheckoutRequest,OrderDto,OrderItemDto,PrescriptionDto,PaymentDto,DeliveryDto,InventoryDto,DashboardStats,ApiResponse}.java
+│   ├── security/{SecurityConfig,JwtUtil,JwtProperties,JwtAuthFilter,CustomUserDetailsService,AuthEntryPoint,AccessDeniedHandlerImpl}.java
+│   ├── enums/{Role,OrderStatus,PaymentStatus,DeliveryStatus,PrescriptionStatus}.java
+│   ├── exception/{BadRequestException,ResourceNotFoundException,InsufficientStockException,GlobalExceptionHandler}.java
+│   ├── config/{WebConfig,OpenApiConfig}.java
+│   └── util/OrderNumberGenerator.java
+├── src/main/resources/application.properties
+└── src/test/{java/com/medicare/pharmacy/{AuthServiceTest,MedicineServiceTest,OrderServiceTest,InventoryLowStockTest,JwtUtilTest}.java,resources/application-test.properties}
 ```
 
-## Business Workflows
+## Configuration
 
-**Customer order flow:** register → login → search medicines → add to cart → checkout
-(server validates stock, pricing and prescriptions) → mock payment → order created →
-track order (state machine). See [`docs/diagrams/architecture.md`](docs/diagrams/architecture.md).
+| Key | Default | Env override (compose) | Notes |
+|---|---|---|---|
+| `server.port` | 8080 | `PORT` | `EXPOSE 8080` |
+| `spring.datasource.url` | `jdbc:postgresql://localhost:5432/pharmacy_db` | `SPRING_DATASOURCE_URL` | compose: `...://postgres:5432/pharmacy_db` |
+| `spring.datasource.username/password` | postgres/postgres | `SPRING_DATASOURCE_USERNAME/PASSWORD` | — |
+| `spring.jpa.hibernate.ddl-auto` | validate | — | tests use `create-drop` |
+| `spring.flyway.enabled/locations` | true / `classpath:db/migration` | — | tests disable; add `V1__init.sql` (currently missing) |
+| `jwt.secret` | 55-char capstone secret | `JWT_SECRET` | must be ≥32 bytes for HS256; tests use 64+ chars |
+| `jwt.expiration` | 86400000 | `JWT_EXPIRATION` | ms |
+| `app.upload.dir` | uploads | — | mounted `./uploads:/app/uploads` in compose |
+| `springdoc.api-docs.path/swagger-ui.path` | /api-docs, /swagger-ui.html | — | — |
 
-**Prescription verification flow:** customer uploads prescription (PENDING) → pharmacist
-reviews → APPROVED / REJECTED (with reason) → customer sees updated status → approved
-prescriptions enable ordering prescription‑required medicines.
+## Troubleshooting
 
-## AI Scope
-
-Designed so AI can be added without refactoring:
-
-- **`MedicineAssistantService`** — interface for natural‑language medicine search
-  (default: deterministic keyword/category matcher, no API key needed).
-- **Prescription OCR** — prescriptions already store item extracts; an OCR/AI stage can
-  populate them, with pharmacist verification (never automatic prescribing).
-- The AI is an **assistant**, never the doctor/pharmacist authority.
-
-## Future Enhancements
-
-- Real payment gateway (Razorpay/Stripe) via `PaymentGateway`
-- Email/SMS notifications via `NotificationService`
-- Address lookup / delivery tracking via maps APIs
-- Stock alerts, reports export, chat‑based refill assistant
-
-## Community / Support
-
-- **Contribute:** see [`CONTRIBUTING.md`](CONTRIBUTING.md) (Conventional Commits required)
-- **Problem statement:** see [`Problem_Statement.md`](Problem_Statement.md)
+- `mvn` not found → install Maven 3.9+ (no wrapper committed). `mvn -v` must work.
+- Flyway `validate` fails / missing `db/migration` → create `src/main/resources/db/migration/V1__init.sql` or set `ddl-auto=update` locally only.
+- `JWT secret too weak` (jjwt) → use 32+ bytes (see `.env.example`).
+- `Connection refused postgres` → `docker compose up postgres`, check `5432`, `pgdata` volume.
+- `Port 8080 in use` → change `server.port`/`PORT` or stop conflicting app.
+- Tests hit Postgres instead of H2 → ensure `@ActiveProfiles("test")` + `spring.flyway.enabled=false`.
+- `uploads` permission errors → `mkdir uploads`, check `app.upload.dir`, compose volume.
+- `401 on /api/medicines POST` → needs ADMIN JWT; `GET` is public, writes are not.
 
 ## License
 
-[MIT](LICENSE)
+MIT © 2026 MediCare — see [LICENSE](LICENSE).

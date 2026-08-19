@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cart — MediCare</title><link rel="stylesheet" href="css/styles.css"></head>
+<body>
+<nav class="navbar"><div class="nav-inner">
+<a class="brand" href="index.html">Medi<span>Care</span> 💊</a>
+<div class="nav-links" id="nav-links">
+<a href="index.html">Home</a><a href="medicines.html">Medicines</a>
+<a href="cart.html" class="active" data-auth>Cart</a><a href="orders.html" data-auth>Orders</a>
+<a href="prescriptions.html" data-auth>Prescriptions</a><a href="dashboard.html" data-auth>Dashboard</a>
+<a href="login.html" data-guest>Login</a><a href="register.html" data-guest>Register</a>
+<a href="#" id="logout-link" data-auth>Logout</a><span class="nav-user" id="nav-user" data-auth></span>
+</div></div></nav>
+<div class="container">
+<h1>Your Cart</h1>
+<table id="cart-table"><thead><tr><th>Medicine</th><th>Price</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead><tbody id="cart-body"></tbody></table>
+<div class="totals"><p><b>Total: <span id="cart-total">₹0</span></b></p></div>
+<section class="section"><h2>Checkout</h2>
+<form class="form" id="checkout-form">
+<label>Shipping Address<textarea id="address" rows="3" required placeholder="Full delivery address"></textarea></label>
+<label>Payment Method<select id="pay"><option value="COD">Cash on Delivery</option><option value="UPI">UPI</option><option value="CARD">Card</option><option value="NETBANKING">Net Banking</option></select></label>
+<button class="btn" type="submit">Place Order</button>
+</form></section>
+</div>
+<footer class="footer">© 2026 MediCare Pharmacy</footer>
+<div id="toast"></div>
+<script src="js/api.js"></script><script src="js/app.js"></script><script src="js/cart.js"></script>
+</body></html>

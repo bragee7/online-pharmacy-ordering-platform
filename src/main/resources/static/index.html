@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MediCare — Online Pharmacy</title><link rel="stylesheet" href="css/styles.css"></head>
+<body>
+<nav class="navbar"><div class="nav-inner">
+<a class="brand" href="index.html">Medi<span>Care</span> 💊</a>
+<div class="nav-links" id="nav-links">
+<a href="index.html" class="active">Home</a>
+<a href="medicines.html">Medicines</a>
+<a href="cart.html" data-auth>Cart</a>
+<a href="orders.html" data-auth>Orders</a>
+<a href="prescriptions.html" data-auth>Prescriptions</a>
+<a href="dashboard.html" data-auth>Dashboard</a>
+<a href="login.html" data-guest>Login</a>
+<a href="register.html" data-guest>Register</a>
+<a href="#" id="logout-link" data-auth>Logout</a>
+<span class="nav-user" id="nav-user" data-auth></span>
+</div></div></nav>
+<div class="container">
+<section class="hero">
+<h1>Your Trusted Online Pharmacy</h1>
+<p>Genuine medicines, fast delivery, easy prescriptions upload.</p>
+<a class="btn" href="medicines.html">Shop Medicines</a>
+</section>
+<section class="section"><h2>Featured Medicines</h2><div class="grid" id="featured-grid"><p class="muted">Loading…</p></div></section>
+</div>
+<footer class="footer">© 2026 MediCare Pharmacy · <a href="/health">API Health</a></footer>
+<div id="toast"></div>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body></html>
