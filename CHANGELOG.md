@@ -1,0 +1,1 @@
+- 2026-08-20 added core domain models - User, Medicine, Category, Inventory
