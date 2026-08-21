@@ -1,1 +1,2 @@
 - 2026-08-20 added core domain models - User, Medicine, Category, Inventory
+- 2026-08-21 set up Flyway V1 - tables and indexes for pharmacy_db
