@@ -2,3 +2,4 @@
 - 2026-08-21 set up Flyway V1 - tables and indexes for pharmacy_db
 - 2026-08-22 seeded demo data - categories, medicines and a bit of stock
 - 2026-08-23 wired security basics - BCrypt and auth config skeleton
+- 2026-08-25 finally got JWT working - 0.12.6 API was being picky
