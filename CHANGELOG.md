@@ -4,3 +4,4 @@
 - 2026-08-23 wired security basics - BCrypt and auth config skeleton
 - 2026-08-25 finally got JWT working - 0.12.6 API was being picky
 - 2026-08-26 login and register flow - token generation and mapping
+- 2026-08-27 added RBAC - CUSTOMER vs PHARMACIST vs ADMIN
