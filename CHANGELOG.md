@@ -7,3 +7,4 @@
 - 2026-08-27 added RBAC - CUSTOMER vs PHARMACIST vs ADMIN
 - 2026-08-28 category endpoints done - basic CRUD working
 - 2026-08-29 medicine catalog with search and Rx filters - pretty happy with it
+- 2026-08-30 inventory service - stock checks and low stock alerts
