@@ -10,3 +10,4 @@
 - 2026-08-30 inventory service - stock checks and low stock alerts
 - 2026-08-31 prescription upload - file storage for images and pdfs
 - 2026-09-01 fixed prescription review flow after testing reject path
+- 2026-09-02 cart feature - add, update, remove with quantity checks
