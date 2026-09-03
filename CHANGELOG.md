@@ -11,3 +11,4 @@
 - 2026-08-31 prescription upload - file storage for images and pdfs
 - 2026-09-01 fixed prescription review flow after testing reject path
 - 2026-09-02 cart feature - add, update, remove with quantity checks
+- 2026-09-03 debugging cart stock validation late evening - validates available vs requested now
