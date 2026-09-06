@@ -14,3 +14,4 @@
 - 2026-09-03 debugging cart stock validation late evening - validates available vs requested now
 - 2026-09-04 order checkout - transactional creation and stock decrement
 - 2026-09-05 mock payment - COD pending, card/UPI stubs
+- 2026-09-06 delivery tracking - tracking numbers and status flow
