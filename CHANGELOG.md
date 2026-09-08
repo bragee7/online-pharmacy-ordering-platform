@@ -15,3 +15,4 @@
 - 2026-09-04 order checkout - transactional creation and stock decrement
 - 2026-09-05 mock payment - COD pending, card/UPI stubs
 - 2026-09-06 delivery tracking - tracking numbers and status flow
+- 2026-09-08 polished order status - PLACED through DELIVERED
