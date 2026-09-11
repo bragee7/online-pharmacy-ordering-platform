@@ -18,3 +18,4 @@
 - 2026-09-08 polished order status - PLACED through DELIVERED
 - 2026-09-09 admin dashboard stats - revenue and pending counts
 - 2026-09-10 audit logging - who did what and when
+- 2026-09-11 Swagger docs - OpenAPI with bearer auth
