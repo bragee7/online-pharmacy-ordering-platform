@@ -19,3 +19,4 @@
 - 2026-09-09 admin dashboard stats - revenue and pending counts
 - 2026-09-10 audit logging - who did what and when
 - 2026-09-11 Swagger docs - OpenAPI with bearer auth
+- 2026-09-12 frontend catalog and search page - vanilla JS
