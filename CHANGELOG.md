@@ -22,3 +22,4 @@
 - 2026-09-12 frontend catalog and search page - vanilla JS
 - 2026-09-13 frontend cart and checkout hooked to APIs
 - 2026-09-15 frontend prescriptions and order history pages
+- 2026-09-16 frontend role dashboards - admin / pharmacist / customer views
