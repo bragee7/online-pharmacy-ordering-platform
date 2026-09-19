@@ -25,3 +25,4 @@
 - 2026-09-16 frontend role dashboards - admin / pharmacist / customer views
 - 2026-09-17 styling pass - teal pharmacy theme and responsive cards
 - 2026-09-18 tests with H2 - 11 green, fixed those m2e quirks
+- 2026-09-19 Dockerized app and postgres - compose working
